@@ -2,7 +2,7 @@ GPU=0
 CUDNN=0
 OPENCV=1
 OPENMP=0
-DEBUG=0
+DEBUG=1
 
 ARCH= -gencode arch=compute_30,code=sm_30 \
       -gencode arch=compute_35,code=sm_35 \
@@ -26,7 +26,7 @@ ARFLAGS=rcs
 OPTS=-Ofast
 LDFLAGS= -lm -pthread 
 COMMON= -Iinclude/ -Isrc/
-CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC
+CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -Wno-unused-function -Wno-self-assign -fPIC
 
 ifeq ($(OPENMP), 1) 
 CFLAGS+= -fopenmp
