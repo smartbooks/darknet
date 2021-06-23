@@ -562,8 +562,11 @@ void validate_detector_recall(char *cfgfile, char *weightfile) {
 
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh,
                    char *outfile, int fullscreen) {
+
     list *options = read_data_cfg(datacfg);
+
     char *name_list = option_find_str(options, "names", "data/names.list");
+
     char **names = get_labels(name_list);
 
     image **alphabet = load_alphabet();

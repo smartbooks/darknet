@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 
 project(darknet C)
 
-set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_C_FLAGS "-DOPENCV -pthread" )
 
