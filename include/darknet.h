@@ -23,9 +23,11 @@ extern int gpu_index;
 
 #ifndef __cplusplus
 #ifdef OPENCV
+
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 #include "opencv2/core/version.hpp"
+
 #if CV_MAJOR_VERSION == 3
 #include "opencv2/videoio/videoio_c.h"
 #include "opencv2/imgcodecs/imgcodecs_c.h"
@@ -888,7 +890,9 @@ matrix make_matrix(int rows, int cols);
 
 #ifndef __cplusplus
 #ifdef OPENCV
+
 image get_image_from_stream(CvCapture *cap);
+
 #endif
 #endif
 

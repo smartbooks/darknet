@@ -10,19 +10,6 @@
 
 #include "utils.h"
 
-
-/*
-// old timing. is it better? who knows!!
-double get_wall_time()
-{
-    struct timeval time;
-    if (gettimeofday(&time,NULL)){
-        return 0;
-    }
-    return (double)time.tv_sec + (double)time.tv_usec * .000001;
-}
-*/
-
 double what_time_is_it_now() {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);

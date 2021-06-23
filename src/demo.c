@@ -18,11 +18,11 @@ static image **demo_alphabet;
 static int demo_classes;
 
 static network *net;
-static image buff [3];
+static image buff[3];
 static image buff_letter[3];
 static int buff_index = 0;
-static CvCapture * cap;
-static IplImage  * ipl;
+static CvCapture *cap;
+static IplImage *ipl;
 static float fps = 0;
 static float demo_thresh = 0;
 static float demo_hier = .5;
@@ -37,13 +37,12 @@ double demo_time;
 
 detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num);
 
-void *detect_in_thread(void *ptr)
-{
+void *detect_in_thread(void *ptr) {
     running = 1;
     float nms = .4;
 
-    layer l = net->layers[net->n-1];
-    float *X = buff_letter[(buff_index+2)%3].data;
+    layer l = net->layers[net->n - 1];
+    float *X = buff_letter[(buff_index + 2) % 3].data;
     network_predict(net, X);
 
     /*
@@ -52,7 +51,7 @@ void *detect_in_thread(void *ptr)
     } else */
     detection *dets = 0;
     int nboxes = 0;
-    if (l.type == REGION){
+    if (l.type == REGION) {
         dets = get_network_boxes(net, buff[0].w, buff[0].h, demo_thresh, demo_hier, 0, 1, &nboxes);
     } else {
         error("Last layer must produce detections\n");
@@ -83,30 +82,28 @@ void *detect_in_thread(void *ptr)
 
     printf("\033[2J");
     printf("\033[1;1H");
-    printf("\nFPS:%.1f\n",fps);
+    printf("\nFPS:%.1f\n", fps);
     printf("Objects:\n\n");
-    image display = buff[(buff_index+2) % 3];
+    image display = buff[(buff_index + 2) % 3];
     draw_detections(display, dets, nboxes, demo_thresh, demo_names, demo_alphabet, demo_classes);
     free_detections(dets, nboxes);
 
-    demo_index = (demo_index + 1)%demo_frame;
+    demo_index = (demo_index + 1) % demo_frame;
     running = 0;
     return 0;
 }
 
-void *fetch_in_thread(void *ptr)
-{
+void *fetch_in_thread(void *ptr) {
     int status = fill_image_from_stream(cap, buff[buff_index]);
     letterbox_image_into(buff[buff_index], net->w, net->h, buff_letter[buff_index]);
-    if(status == 0) demo_done = 1;
+    if (status == 0) demo_done = 1;
     return 0;
 }
 
-void *display_in_thread(void *ptr)
-{
-    show_image_cv(buff[(buff_index + 1)%3], "Demo", ipl);
+void *display_in_thread(void *ptr) {
+    show_image_cv(buff[(buff_index + 1) % 3], "Demo", ipl);
     int c = cvWaitKey(1);
-    if (c != -1) c = c%256;
+    if (c != -1) c = c % 256;
     if (c == 27) {
         demo_done = 1;
         return 0;
@@ -114,32 +111,30 @@ void *display_in_thread(void *ptr)
         demo_thresh += .02;
     } else if (c == 84) {
         demo_thresh -= .02;
-        if(demo_thresh <= .02) demo_thresh = .02;
+        if (demo_thresh <= .02) demo_thresh = .02;
     } else if (c == 83) {
         demo_hier += .02;
     } else if (c == 81) {
         demo_hier -= .02;
-        if(demo_hier <= .0) demo_hier = .0;
+        if (demo_hier <= .0) demo_hier = .0;
     }
     return 0;
 }
 
-void *display_loop(void *ptr)
-{
-    while(1){
+void *display_loop(void *ptr) {
+    while (1) {
         display_in_thread(0);
     }
 }
 
-void *detect_loop(void *ptr)
-{
-    while(1){
+void *detect_loop(void *ptr) {
+    while (1) {
         detect_in_thread(0);
     }
 }
 
-void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg_frames, float hier, int w, int h, int frames, int fullscreen)
-{
+void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes,
+          int delay, char *prefix, int avg_frames, float hier, int w, int h, int frames, int fullscreen) {
     //demo_frame = avg_frames;
     image **alphabet = load_alphabet();
     demo_names = names;
@@ -155,24 +150,24 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
 
     srand(2222222);
 
-    if(filename){
+    if (filename) {
         printf("video file: %s\n", filename);
         cap = cvCaptureFromFile(filename);
-    }else{
+    } else {
         cap = cvCaptureFromCAM(cam_index);
 
-        if(w){
+        if (w) {
             cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_WIDTH, w);
         }
-        if(h){
+        if (h) {
             cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_HEIGHT, h);
         }
-        if(frames){
+        if (frames) {
             cvSetCaptureProperty(cap, CV_CAP_PROP_FPS, frames);
         }
     }
 
-    if(!cap) error("Couldn't connect to webcam.\n");
+    if (!cap) error("Couldn't connect to webcam.\n");
 
     buff[0] = get_image_from_stream(cap);
     buff[1] = copy_image(buff[0]);
@@ -180,12 +175,12 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
     buff_letter[0] = letterbox_image(buff[0], net->w, net->h);
     buff_letter[1] = letterbox_image(buff[0], net->w, net->h);
     buff_letter[2] = letterbox_image(buff[0], net->w, net->h);
-    ipl = cvCreateImage(cvSize(buff[0].w,buff[0].h), IPL_DEPTH_8U, buff[0].c);
+    ipl = cvCreateImage(cvSize(buff[0].w, buff[0].h), IPL_DEPTH_8U, buff[0].c);
 
     int count = 0;
-    if(!prefix){
-        cvNamedWindow("Demo", CV_WINDOW_NORMAL); 
-        if(fullscreen){
+    if (!prefix) {
+        cvNamedWindow("Demo", CV_WINDOW_NORMAL);
+        if (fullscreen) {
             cvSetWindowProperty("Demo", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
         } else {
             cvMoveWindow("Demo", 0, 0);
@@ -195,18 +190,18 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
 
     demo_time = what_time_is_it_now();
 
-    while(!demo_done){
-        buff_index = (buff_index + 1) %3;
-        if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
-        if(pthread_create(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed");
-        if(!prefix){
-            fps = 1./(what_time_is_it_now() - demo_time);
+    while (!demo_done) {
+        buff_index = (buff_index + 1) % 3;
+        if (pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
+        if (pthread_create(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed");
+        if (!prefix) {
+            fps = 1. / (what_time_is_it_now() - demo_time);
             demo_time = what_time_is_it_now();
             display_in_thread(0);
-        }else{
+        } else {
             char name[256];
             sprintf(name, "%s_%08d", prefix, count);
-            save_image(buff[(buff_index + 1)%3], name);
+            save_image(buff[(buff_index + 1) % 3], name);
         }
         pthread_join(fetch_thread, 0);
         pthread_join(detect_thread, 0);

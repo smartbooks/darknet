@@ -1,25 +1,18 @@
 #include "activation_layer.h"
-#include "utils.h"
 #include "cuda.h"
-#include "blas.h"
-#include "gemm.h"
-
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-layer make_activation_layer(int batch, int inputs, ACTIVATION activation)
-{
+layer make_activation_layer(int batch, int inputs, ACTIVATION activation) {
     layer l = {0};
     l.type = ACTIVE;
 
     l.inputs = inputs;
     l.outputs = inputs;
-    l.batch=batch;
+    l.batch = batch;
 
-    l.output = calloc(batch*inputs, sizeof(float*));
-    l.delta = calloc(batch*inputs, sizeof(float*));
+    l.output = calloc(batch * inputs, sizeof(float *));
+    l.delta = calloc(batch * inputs, sizeof(float *));
 
     l.forward = forward_activation_layer;
     l.backward = backward_activation_layer;
@@ -35,16 +28,14 @@ layer make_activation_layer(int batch, int inputs, ACTIVATION activation)
     return l;
 }
 
-void forward_activation_layer(layer l, network net)
-{
-    copy_cpu(l.outputs*l.batch, net.input, 1, l.output, 1);
-    activate_array(l.output, l.outputs*l.batch, l.activation);
+void forward_activation_layer(layer l, network net) {
+    copy_cpu(l.outputs * l.batch, net.input, 1, l.output, 1);
+    activate_array(l.output, l.outputs * l.batch, l.activation);
 }
 
-void backward_activation_layer(layer l, network net)
-{
-    gradient_array(l.output, l.outputs*l.batch, l.activation, l.delta);
-    copy_cpu(l.outputs*l.batch, l.delta, 1, net.delta, 1);
+void backward_activation_layer(layer l, network net) {
+    gradient_array(l.output, l.outputs * l.batch, l.activation, l.delta);
+    copy_cpu(l.outputs * l.batch, l.delta, 1, net.delta, 1);
 }
 
 #ifdef GPU
