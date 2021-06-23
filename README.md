@@ -32,6 +32,7 @@ wget https://pjreddie.com/media/files/yolov3.weights
 
 #图片检测
 ./darknet detect cfg/yolov3.cfg cfg/yolov3.weights data/dog.jpg
+./cmake-build-debug-appleclang/darknet detect cfg/yolov3.cfg cfg/yolov3.weights data/dog.jpg
 
 #视频检测-摄像头
 ./darknet detector demo cfg/coco.data cfg/yolov3.cfg cfg/yolov3.weights

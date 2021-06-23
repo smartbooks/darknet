@@ -27,3 +27,5 @@ Thumbs.db
 *.swp
 *.a
 *.so
+/cmake-build-debug-appleclang
+/results
