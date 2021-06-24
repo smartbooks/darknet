@@ -49,12 +49,25 @@ load_args get_base_args(network *net) {
     return args;
 }
 
+/**
+ * 根据配置文件和权重初始化网络
+ * @param cfg 配置文件
+ * @param weights 网络权重
+ * @param clear
+ * @return 网络
+ */
 network *load_network(char *cfg, char *weights, int clear) {
+
     network *net = parse_network_cfg(cfg);
+
     if (weights && weights[0] != 0) {
+
         load_weights(net, weights);
+
     }
+
     if (clear) (*net->seen) = 0;
+
     return net;
 }
 
@@ -469,17 +482,29 @@ void top_predictions(network *net, int k, int *index) {
     top_k(net->output, net->outputs, k, index);
 }
 
-
+/**
+ * 网络预测
+ * @param net  网络
+ * @param input  网络输入
+ * @return 网络输出
+ */
 float *network_predict(network *net, float *input) {
+
     network orig = *net;
+
     net->input = input;
     net->truth = 0;
     net->train = 0;
     net->delta = 0;
+
     forward_network(net);
+
     float *out = net->output;
+
     *net = orig;
+
     return out;
+
 }
 
 int num_detections(network *net, float thresh) {
@@ -498,17 +523,24 @@ int num_detections(network *net, float thresh) {
 }
 
 detection *make_network_boxes(network *net, float thresh, int *num) {
+
     layer l = net->layers[net->n - 1];
+
     int i;
+
     int nboxes = num_detections(net, thresh);
+
     if (num) *num = nboxes;
+
     detection *dets = calloc(nboxes, sizeof(detection));
+
     for (i = 0; i < nboxes; ++i) {
         dets[i].prob = calloc(l.classes, sizeof(float));
         if (l.coords > 4) {
             dets[i].mask = calloc(l.coords - 4, sizeof(float));
         }
     }
+
     return dets;
 }
 
@@ -532,9 +564,13 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
 }
 
 detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num) {
+
     detection *dets = make_network_boxes(net, thresh, num);
+
     fill_network_boxes(net, w, h, thresh, hier, map, relative, dets);
+
     return dets;
+
 }
 
 void free_detections(detection *dets, int n) {

@@ -60,13 +60,27 @@ void free_list_contents(list *l) {
     }
 }
 
+/**
+ * list转数组
+ * @param l 列表
+ * @return 数组指针
+ */
 void **list_to_array(list *l) {
-    void **a = calloc(l->size, sizeof(void *));
+
+    void **a = calloc(l->size, sizeof(void *));  //分配l->size个sizeof(void *)类型的数组内存
+
     int count = 0;
+
     node *n = l->front;
+
     while (n) {
+
         a[count++] = n->val;
+
         n = n->next;
+
     }
+
     return a;
+
 }

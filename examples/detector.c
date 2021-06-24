@@ -559,7 +559,17 @@ void validate_detector_recall(char *cfgfile, char *weightfile) {
     }
 }
 
-
+/**
+ * 检测单张图片
+ * @param datacfg 数据配置文件
+ * @param cfgfile 配置文件
+ * @param weightfile 权重配置文件
+ * @param filename 图片文件
+ * @param thresh 检测阈值
+ * @param hier_thresh
+ * @param outfile 输出文件
+ * @param fullscreen 是否全屏
+ */
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh,
                    char *outfile, int fullscreen) {
 
@@ -570,229 +580,102 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     char **names = get_labels(name_list);
 
     image **alphabet = load_alphabet();
+
     network *net = load_network(cfgfile, weightfile, 0);
+
     set_batch_network(net, 1);
-    srand(2222222);
+
+    srand(2222222);   //设置随机数种子值
+
     double time;
+
     char buff[256];
+
     char *input = buff;
+
     float nms = .3;
+
     while (1) {
+
         if (filename) {
+
             strncpy(input, filename, 256);
+
         } else {
+
             printf("Enter Image Path: ");
+
             fflush(stdout);
+
             input = fgets(input, 256, stdin);
+
             if (!input) return;
+
             strtok(input, "\n");
+
         }
+
         image im = load_image_color(input, 0, 0);
+
         image sized = letterbox_image(im, net->w, net->h);
-        //image sized = resize_image(im, net->w, net->h);
-        //image sized2 = resize_max(im, net->w);
-        //image sized = crop_image(sized2, -((net->w - sized2.w)/2), -((net->h - sized2.h)/2), net->w, net->h);
-        //resize_network(net, sized.w, sized.h);
+
         layer l = net->layers[net->n - 1];
 
-
         float *X = sized.data;
+
         time = what_time_is_it_now();
-        network_predict(net, X);
+
+        network_predict(net, X);    //网络预测
+
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now() - time);
+
         int nboxes = 0;
+
         detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
+
         printf("%d\n", nboxes);
-        //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+
         if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
+
         draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+
         free_detections(dets, nboxes);
+
         if (outfile) {
+
             save_image(im, outfile);
+
         } else {
+
             save_image(im, "predictions");
+
 #ifdef OPENCV
+
             cvNamedWindow("predictions", CV_WINDOW_NORMAL);
+
             if (fullscreen) {
+
                 cvSetWindowProperty("predictions", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+
             }
+
             show_image(im, "predictions");
+
             cvWaitKey(0);
+
             cvDestroyAllWindows();
 #endif
         }
 
         free_image(im);
+
         free_image(sized);
+
         if (filename) break;
+
     }
+
 }
-
-/*
-void censor_detector(char *datacfg, char *cfgfile, char *weightfile, int cam_index, const char *filename, int class, float thresh, int skip)
-{
-#ifdef OPENCV
-    char *base = basecfg(cfgfile);
-    network *net = load_network(cfgfile, weightfile, 0);
-    set_batch_network(net, 1);
-
-    srand(2222222);
-    CvCapture * cap;
-
-    int w = 1280;
-    int h = 720;
-
-    if(filename){
-        cap = cvCaptureFromFile(filename);
-    }else{
-        cap = cvCaptureFromCAM(cam_index);
-    }
-
-    if(w){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_WIDTH, w);
-    }
-    if(h){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_HEIGHT, h);
-    }
-
-    if(!cap) error("Couldn't connect to webcam.\n");
-    cvNamedWindow(base, CV_WINDOW_NORMAL); 
-    cvResizeWindow(base, 512, 512);
-    float fps = 0;
-    int i;
-    float nms = .45;
-
-    while(1){
-        image in = get_image_from_stream(cap);
-        //image in_s = resize_image(in, net->w, net->h);
-        image in_s = letterbox_image(in, net->w, net->h);
-        layer l = net->layers[net->n-1];
-
-        float *X = in_s.data;
-        network_predict(net, X);
-        int nboxes = 0;
-        detection *dets = get_network_boxes(net, in.w, in.h, thresh, 0, 0, 0, &nboxes);
-        //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-        if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-
-        for(i = 0; i < nboxes; ++i){
-            if(dets[i].prob[class] > thresh){
-                box b = dets[i].bbox;
-                int left  = b.x-b.w/2.;
-                int top   = b.y-b.h/2.;
-                censor_image(in, left, top, b.w, b.h);
-            }
-        }
-        show_image(in, base);
-        cvWaitKey(10);
-        free_detections(dets, nboxes);
-
-
-        free_image(in_s);
-        free_image(in);
-
-
-        float curr = 0;
-        fps = .9*fps + .1*curr;
-        for(i = 0; i < skip; ++i){
-            image in = get_image_from_stream(cap);
-            free_image(in);
-        }
-    }
-    #endif
-}
-
-void extract_detector(char *datacfg, char *cfgfile, char *weightfile, int cam_index, const char *filename, int class, float thresh, int skip)
-{
-#ifdef OPENCV
-    char *base = basecfg(cfgfile);
-    network *net = load_network(cfgfile, weightfile, 0);
-    set_batch_network(net, 1);
-
-    srand(2222222);
-    CvCapture * cap;
-
-    int w = 1280;
-    int h = 720;
-
-    if(filename){
-        cap = cvCaptureFromFile(filename);
-    }else{
-        cap = cvCaptureFromCAM(cam_index);
-    }
-
-    if(w){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_WIDTH, w);
-    }
-    if(h){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_HEIGHT, h);
-    }
-
-    if(!cap) error("Couldn't connect to webcam.\n");
-    cvNamedWindow(base, CV_WINDOW_NORMAL); 
-    cvResizeWindow(base, 512, 512);
-    float fps = 0;
-    int i;
-    int count = 0;
-    float nms = .45;
-
-    while(1){
-        image in = get_image_from_stream(cap);
-        //image in_s = resize_image(in, net->w, net->h);
-        image in_s = letterbox_image(in, net->w, net->h);
-        layer l = net->layers[net->n-1];
-
-        show_image(in, base);
-
-        int nboxes = 0;
-        float *X = in_s.data;
-        network_predict(net, X);
-        detection *dets = get_network_boxes(net, in.w, in.h, thresh, 0, 0, 1, &nboxes);
-        //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-        if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-
-        for(i = 0; i < nboxes; ++i){
-            if(dets[i].prob[class] > thresh){
-                box b = dets[i].bbox;
-                int size = b.w*in.w > b.h*in.h ? b.w*in.w : b.h*in.h;
-                int dx  = b.x*in.w-size/2.;
-                int dy  = b.y*in.h-size/2.;
-                image bim = crop_image(in, dx, dy, size, size);
-                char buff[2048];
-                sprintf(buff, "results/extract/%07d", count);
-                ++count;
-                save_image(bim, buff);
-                free_image(bim);
-            }
-        }
-        free_detections(dets, nboxes);
-
-
-        free_image(in_s);
-        free_image(in);
-
-
-        float curr = 0;
-        fps = .9*fps + .1*curr;
-        for(i = 0; i < skip; ++i){
-            image in = get_image_from_stream(cap);
-            free_image(in);
-        }
-    }
-    #endif
-}
-*/
-
-/*
-void network_detect(network *net, image im, float thresh, float hier_thresh, float nms, detection *dets)
-{
-    network_predict_image(net, im);
-    layer l = net->layers[net->n-1];
-    int nboxes = num_boxes(net);
-    fill_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 0, dets);
-    if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-}
-*/
 
 void run_detector(int argc, char **argv) {
     char *prefix = find_char_arg(argc, argv, "-prefix", 0);

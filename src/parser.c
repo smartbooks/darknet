@@ -708,7 +708,9 @@ int is_network(section *s) {
 }
 
 network *parse_network_cfg(char *filename) {
+
     list *sections = read_cfg(filename);
+
     node *n = sections->front;
     if (!n) error("Config file has no sections");
     network *net = make_network(sections->size - 1);
@@ -852,6 +854,11 @@ network *parse_network_cfg(char *filename) {
     return net;
 }
 
+/**
+ * 读取配置文件并返回列表
+ * @param filename 配置文件
+ * @return 列表
+ */
 list *read_cfg(char *filename) {
     FILE *file = fopen(filename, "r");
     if (file == 0) file_error(filename);

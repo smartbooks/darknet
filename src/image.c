@@ -216,10 +216,18 @@ void draw_bbox(image a, box bbox, int w, float r, float g, float b) {
     }
 }
 
+/**
+ * 加载字符表
+ * @return
+ */
 image **load_alphabet() {
+
     int i, j;
+
     const int nsize = 8;
+
     image **alphabets = calloc(nsize, sizeof(image));
+
     for (j = 0; j < nsize; ++j) {
         alphabets[j] = calloc(128, sizeof(image));
         for (i = 32; i < 127; ++i) {

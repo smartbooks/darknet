@@ -101,6 +101,9 @@ typedef enum {
     SSE, MASKED, L1, SEG, SMOOTH, WGAN
 } COST_TYPE;
 
+/**
+ * 结构体类型更新参数
+ */
 typedef struct {
     int batch;
     float learning_rate;
@@ -114,16 +117,25 @@ typedef struct {
 } update_args;
 
 struct network;
+
 typedef struct network network;
 
 struct layer;
+
 typedef struct layer layer;
 
+/**
+ * 层定义
+ */
 struct layer {
+
     LAYER_TYPE type;
     ACTIVATION activation;
     COST_TYPE cost_type;
 
+    /**
+     * 结构体函数指针定义，向前
+     */
     void (*forward)(struct layer, struct network);
 
     void (*backward)(struct layer, struct network);
@@ -434,7 +446,13 @@ struct layer {
 void free_layer(layer);
 
 typedef enum {
-    CONSTANT, STEP, EXP, POLY, STEPS, SIG, RANDOM
+    CONSTANT,
+    STEP,
+    EXP,
+    POLY,
+    STEPS,
+    SIG,
+    RANDOM
 } learning_rate_policy;
 
 typedef struct network {

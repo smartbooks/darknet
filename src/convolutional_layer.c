@@ -165,9 +165,9 @@ void cudnn_convolutional_setup(layer *l)
 #endif
 #endif
 
-convolutional_layer
-make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int size, int stride, int padding,
-                         ACTIVATION activation, int batch_normalize, int binary, int xnor, int adam) {
+convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int size, int stride,
+                                             int padding, ACTIVATION activation, int batch_normalize, int binary,
+                                             int xnor, int adam) {
     int i;
     convolutional_layer l = {0};
     l.type = CONVOLUTIONAL;
@@ -194,11 +194,8 @@ make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int 
     l.nweights = c / groups * n * size * size;
     l.nbiases = n;
 
-    // float scale = 1./sqrt(size*size*c);
     float scale = sqrt(2. / (size * size * c / l.groups));
-    //printf("convscale %f\n", scale);
-    //scale = .02;
-    //for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(-1, 1);
+
     for (i = 0; i < l.nweights; ++i) l.weights[i] = scale * rand_normal();
     int out_w = convolutional_out_width(l);
     int out_h = convolutional_out_height(l);
@@ -211,14 +208,17 @@ make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int 
     l.output = calloc(l.batch * l.outputs, sizeof(float));
     l.delta = calloc(l.batch * l.outputs, sizeof(float));
 
+    //结构体函数指针初始化
     l.forward = forward_convolutional_layer;
     l.backward = backward_convolutional_layer;
     l.update = update_convolutional_layer;
+
     if (binary) {
         l.binary_weights = calloc(l.nweights, sizeof(float));
         l.cweights = calloc(l.nweights, sizeof(char));
         l.scales = calloc(n, sizeof(float));
     }
+
     if (xnor) {
         l.binary_weights = calloc(l.nweights, sizeof(float));
         l.binary_input = calloc(l.inputs * l.batch, sizeof(float));
@@ -559,32 +559,38 @@ void rescale_weights(convolutional_layer l, float scale, float trans) {
 }
 
 image *get_weights(convolutional_layer l) {
+
     image *weights = calloc(l.n, sizeof(image));
+
     int i;
+
     for (i = 0; i < l.n; ++i) {
+
         weights[i] = copy_image(get_convolutional_weight(l, i));
+
         normalize_image(weights[i]);
-        /*
-           char buff[256];
-           sprintf(buff, "filter%d", i);
-           save_image(weights[i], buff);
-         */
+        
     }
-    //error("hey");
+
     return weights;
 }
 
 image *visualize_convolutional_layer(convolutional_layer l, char *window, image *prev_weights) {
+
     image *single_weights = get_weights(l);
+
     show_images(single_weights, l.n, window);
 
     image delta = get_convolutional_image(l);
+
     image dc = collapse_image_layers(delta, 1);
+
     char buff[256];
+
     sprintf(buff, "%s: Output", window);
-    //show_image(dc, buff);
-    //save_image(dc, buff);
+
     free_image(dc);
+
     return single_weights;
 }
 
