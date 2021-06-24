@@ -465,7 +465,7 @@ int main(int argc, char **argv) {
 
         char *datacfg = "cfg/coco.data";
 
-        test_detector(datacfg, argv[2], argv[3], filename, thresh, .5, outfile, fullscreen);
+        test_detector(datacfg, argv[2], argv[3], filename, thresh, thresh, outfile, fullscreen);
 
     } else if (0 == strcmp(argv[1], "cifar")) {
 
